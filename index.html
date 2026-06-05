@@ -89,7 +89,6 @@ input{font-family:inherit}
 /* bar-inner clips the label and progress bar */
 .bar-inner{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}
 .bar-progress{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.25);border-right:1px solid rgba(255,255,255,.35)}
-.bar-overflow-stripe{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(215,38,61,.22),rgba(215,38,61,.22) 3px,transparent 3px,transparent 9px);pointer-events:none;border-radius:inherit}
 .bar-label{position:relative;z-index:1;font-size:12px;font-weight:700;color:#fff;padding-left:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 /* resize handles */
 .bar-rh{position:absolute;top:0;bottom:0;width:7px;z-index:5;display:flex;align-items:center;justify-content:center}
@@ -1131,12 +1130,11 @@ function render() {
         data-bar-id="${row.id}" data-bar-pid="${pid}"
         style="left:${Math.max(0,x)}px;width:${w}px;top:${42*.18}px;height:${42*.64}px;
           background:${row.color};border-radius:${row.isProject?5:4}px;
-          opacity:${row.status==='cancelled'?.35:.82};outline:${isOvlp?'2px solid var(--red)':'none'}"
+          opacity:${row.status==='cancelled'?.35:.82};outline:${isOvlp?'2px solid var(--red)':'none'};box-shadow:${isOverBudget?'inset 0 0 0 2px rgba(215,38,61,.85)':'none'}"
         ondblclick="handleBarDblClick(event,'${row.id}','${pid}')">
         <div class="bar-rh left"  data-rh="left"  data-bar-id="${row.id}" data-bar-pid="${pid}"></div>
         <div class="bar-inner">
           ${effectiveProgress > 0 ? `<div class="bar-progress" style="width:${Math.min(effectiveProgress,100)}%"></div>` : ''}
-          ${isOverBudget ? `<div class="bar-overflow-stripe"></div>` : ''}
           ${w > 60 ? `<span class="bar-label">${row.name}${ttLabel}${overLabel}</span>` : ''}
         </div>
         <div class="bar-rh right" data-rh="right" data-bar-id="${row.id}" data-bar-pid="${pid}"></div>
