@@ -1112,7 +1112,7 @@ function render() {
       ? ttH - row.allocatedHours : null;
     const isOverBudget = overH !== null && overH > 0;
     const ttLabel = ttH ? ` · ⏱ ${fmtHours(ttH)}` : '';
-    const overLabel = isOverBudget ? `<span style="color:#ffa8a8;margin-left:3px;font-weight:700">+${fmtHours(overH)}</span>` : '';
+    const overLabel = isOverBudget ? `<span style="background:rgba(215,38,61,.88);color:#fff;padding:1px 6px;border-radius:3px;margin-left:5px;font-weight:700;font-size:11px">+${fmtHours(overH)}</span>` : '';
 
     // Progres efectiv: auto din ore alocate+TT, altfel manual
     let effectiveProgress = row.progress;
