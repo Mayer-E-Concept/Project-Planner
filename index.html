@@ -89,6 +89,7 @@ input{font-family:inherit}
 /* bar-inner clips the label and progress bar */
 .bar-inner{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}
 .bar-progress{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.25);border-right:1px solid rgba(255,255,255,.35)}
+.bar-overflow-stripe{position:absolute;inset:0;background:repeating-linear-gradient(-45deg,rgba(215,38,61,.22),rgba(215,38,61,.22) 3px,transparent 3px,transparent 9px);pointer-events:none;border-radius:inherit}
 .bar-label{position:relative;z-index:1;font-size:12px;font-weight:700;color:#fff;padding-left:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 /* resize handles */
 .bar-rh{position:absolute;top:0;bottom:0;width:7px;z-index:5;display:flex;align-items:center;justify-content:center}
@@ -191,6 +192,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <div class="ht-row" id="ht-tt-row" style="display:none"><span class="ht-icon">⏱</span><span id="ht-tt" class="ht-val"></span></div>
   <div class="ht-row" id="ht-prog-row" style="display:none"><span class="ht-icon">▰</span><span id="ht-prog" class="ht-val"></span></div>
   <div class="ht-row" id="ht-asg-row" style="display:none"><span class="ht-icon">👤</span><span id="ht-asg" class="ht-val"></span></div>
+  <div class="ht-row" id="ht-over-row" style="display:none"><span class="ht-icon">⚠</span><span id="ht-over" class="ht-val" style="color:var(--red)"></span></div>
 </div>
 
 <!-- ── Login overlay ── -->
@@ -1107,7 +1109,11 @@ function render() {
     const barVisible = x < totalW && x + w > 0;
 
     const ttH = row.isProject ? getTTHours(row.name, row.ttLink) : null;
+    const overH = (row.isProject && (row.allocatedHours || 0) > 0 && ttH > row.allocatedHours)
+      ? ttH - row.allocatedHours : null;
+    const isOverBudget = overH !== null && overH > 0;
     const ttLabel = ttH ? ` · ⏱ ${fmtHours(ttH)}` : '';
+    const overLabel = isOverBudget ? `<span style="color:#ffa8a8;margin-left:3px;font-weight:700">+${fmtHours(overH)}</span>` : '';
 
     // Progres efectiv: auto din ore alocate+TT, altfel manual
     let effectiveProgress = row.progress;
@@ -1129,8 +1135,9 @@ function render() {
         ondblclick="handleBarDblClick(event,'${row.id}','${pid}')">
         <div class="bar-rh left"  data-rh="left"  data-bar-id="${row.id}" data-bar-pid="${pid}"></div>
         <div class="bar-inner">
-          ${effectiveProgress > 0 ? `<div class="bar-progress" style="width:${effectiveProgress}%"></div>` : ''}
-          ${w > 60 ? `<span class="bar-label">${row.name}${ttLabel}</span>` : ''}
+          ${effectiveProgress > 0 ? `<div class="bar-progress" style="width:${Math.min(effectiveProgress,100)}%"></div>` : ''}
+          ${isOverBudget ? `<div class="bar-overflow-stripe"></div>` : ''}
+          ${w > 60 ? `<span class="bar-label">${row.name}${ttLabel}${overLabel}</span>` : ''}
         </div>
         <div class="bar-rh right" data-rh="right" data-bar-id="${row.id}" data-bar-pid="${pid}"></div>
       </div>` : '';
@@ -1300,8 +1307,14 @@ function syncModal() {
       progSlider.disabled = true;
       progLbl.textContent  = `Progres — ${autoPct}% (auto)`;
       progFill.style.width = autoPct + '%';
-      allocInfo.textContent = `${fmtHours(ttH)} lucrate din ${allocH}h alocate`;
-      allocInfo.style.color = autoPct >= 100 ? 'var(--red)' : 'var(--green)';
+      if (ttH > allocH) {
+        const over = ttH - allocH;
+        allocInfo.textContent = `${fmtHours(ttH)} lucrate din ${allocH}h alocate · +${fmtHours(over)} depășit`;
+        allocInfo.style.color = 'var(--red)';
+      } else {
+        allocInfo.textContent = `${fmtHours(ttH)} lucrate din ${allocH}h alocate`;
+        allocInfo.style.color = autoPct >= 100 ? 'var(--red)' : 'var(--green)';
+      }
     } else {
       // Revenire la progres manual
       if (progSlider.disabled) {
@@ -1701,6 +1714,18 @@ document.getElementById('gantt').addEventListener('scroll', updateBarLabels, { p
       htProgRow.style.display = 'flex';
     } else {
       htProgRow.style.display = 'none';
+    }
+
+    const htOverRow = document.getElementById('ht-over-row');
+    const htOver    = document.getElementById('ht-over');
+    if (htOverRow && htOver) {
+      if (isProject && ttH && (row.allocatedHours || 0) > 0 && ttH > row.allocatedHours) {
+        const over = ttH - row.allocatedHours;
+        htOver.textContent      = `+${fmtHours(over)} peste alocat`;
+        htOverRow.style.display = 'flex';
+      } else {
+        htOverRow.style.display = 'none';
+      }
     }
 
     const htAsgRow = document.getElementById('ht-asg-row');
