@@ -419,7 +419,7 @@ const CONFIG = {
 /* ── MSAL ── */
 let msalInstance, currentAccount, cachedSiteId, cachedListId, listItemId;
 
-const SCOPES = ['https://graph.microsoft.com/Sites.ReadWrite.All'];
+const SCOPES = ['https://graph.microsoft.com/Sites.ReadWrite.All', 'https://graph.microsoft.com/User.Read'];
 
 async function initMsal() {
   msalInstance = new msal.PublicClientApplication({
@@ -1446,7 +1446,10 @@ async function syncTT(allTime = false) {
   btn.disabled = true; btnAll.disabled = true;
   try {
     const url = allTime ? `${TT_PROXY}/hours/alltime` : `${TT_PROXY}/hours`;
-    const resp = await fetch(url);
+    const token = await getToken();
+    if (!token) throw new Error('no-token');
+    const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!resp.ok) throw new Error('proxy ' + resp.status);
     const data = await resp.json();
     ttHours = {};
     ttProjectList = [];
