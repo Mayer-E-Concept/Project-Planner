@@ -452,6 +452,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
           <th>Nume</th>
           <th style="text-align:right">Venit</th>
           <th style="text-align:right">Ore</th>
+          <th style="text-align:right">Cost</th>
           <th style="text-align:right">Tarif efectiv</th>
           <th style="text-align:right">Profit</th>
           <th style="text-align:right">Abatere buget</th>
@@ -1819,6 +1820,8 @@ function renderDashboard() {
     const marginTxt = r.margin == null ? '—' : fmtMoney(r.margin);
     const revTxt    = r.revenue > 0 ? fmtMoney(r.revenue) : '—';
     const hoursTxt  = r.hours > 0 ? fmtHours(r.hours) : '—';
+    const costVal   = r.hours > 0 && internalRate() > 0 ? r.hours * effCostRate(r.p) : null;
+    const costTxt   = costVal != null ? fmtMoney(costVal) : '—';
     const eRateTxt  = r.eRate == null ? '—' : (r.eRate.toLocaleString('ro-RO',{maximumFractionDigits:0}) + ' €/h');
     let varTxt = '—', varCol = 'var(--t2)';
     if (r.variance != null) {
@@ -1831,6 +1834,7 @@ function renderDashboard() {
       <td class="log-project">${dot}${esc(r.name)}</td>
       <td style="text-align:right">${revTxt}</td>
       <td style="text-align:right">${hoursTxt}</td>
+      <td style="text-align:right;color:var(--t2)">${costTxt}</td>
       <td style="text-align:right">${eRateTxt}</td>
       <td style="text-align:right;color:${marginCol};font-weight:600">${marginTxt}</td>
       <td style="text-align:right;color:${varCol}">${varTxt}</td>
@@ -1839,12 +1843,14 @@ function renderDashboard() {
 }
 
 function exportDashboard() {
-  const rows = [['Nume','Venit (EUR)','Ore','Tarif efectiv (EUR/h)','Profit (EUR)','Abatere buget (%)']];
+  const rows = [['Nume','Venit (EUR)','Ore','Cost (EUR)','Tarif efectiv (EUR/h)','Profit (EUR)','Abatere buget (%)']];
   dashRows().forEach(r => {
+    const costVal = r.hours > 0 && internalRate() > 0 ? Math.round(r.hours * effCostRate(r.p)) : '';
     rows.push([
       r.name,
       r.revenue > 0 ? Math.round(r.revenue) : '',
       r.hours > 0 ? r.hours.toFixed(2) : '',
+      costVal,
       r.eRate == null ? '' : Math.round(r.eRate),
       r.margin == null ? '' : Math.round(r.margin),
       r.variance == null ? '' : Math.round(r.variance),
