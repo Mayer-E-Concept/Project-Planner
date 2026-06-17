@@ -224,6 +224,8 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <input id="search" placeholder="Caută proiect…" oninput="render()">
   <span id="profit-summary" style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:6px;white-space:nowrap"></span>
   <div class="spacer"></div>
+  <button id="btn-dashboard" onclick="showDashboard()" style="display:none;height:28px;padding:0 12px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:11px;cursor:pointer">📊 Profitabilitate</button>
+  <button id="btn-settings" onclick="showSettings()" style="display:none;height:28px;padding:0 12px;border-radius:var(--r);border:1px solid rgba(193,127,58,.4);background:rgba(193,127,58,.09);color:rgba(180,115,40,1);font-size:11px;font-weight:600;letter-spacing:.01em;cursor:pointer">€ Costuri</button>
   <button id="btn-overlaps" onclick="toggleOverlaps()">⚠ Suprapuneri</button>
   <button id="btn-tt-sync" onclick="syncTT(true)" style="height:28px;padding:0 12px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:11px;cursor:pointer;transition:all .15s">⏱ Sync TT</button>
   <button id="btn-tt-alltime" onclick="syncTT(false)" style="height:28px;padding:0 10px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t3);font-size:11px;cursor:pointer;transition:all .15s" title="Sincronizeaza doar ultimele 12 luni (rapid)">⏱ 12 luni</button>
@@ -233,8 +235,6 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   <span id="zoom-val">22px/zi</span>
   <button class="zbtn" onclick="zoom(3)">+</button>
   <button id="btn-add-project" onclick="addProject()">+ Proiect nou</button>
-  <button id="btn-dashboard" onclick="showDashboard()" style="display:none;height:28px;padding:0 12px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:11px;cursor:pointer">📊 Analiză</button>
-  <button id="btn-settings" onclick="showSettings()" title="Setări costuri" style="display:none;height:28px;width:30px;padding:0;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:13px;cursor:pointer">⚙</button>
   <button id="btn-logs" onclick="showLogs()" style="display:none;height:28px;padding:0 12px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:11px;cursor:pointer">📋 Jurnal</button>
   <button id="btn-whitelist" onclick="showWlModal()" style="display:none;height:28px;padding:0 12px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg2);color:var(--t2);font-size:11px;cursor:pointer">👥 Utilizatori</button>
   <button id="user-btn" onclick="logout()" title="Deconectare">👤 <span id="user-name"></span></button>
@@ -453,7 +453,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
           <th style="text-align:right">Venit</th>
           <th style="text-align:right">Ore</th>
           <th style="text-align:right">Tarif efectiv</th>
-          <th style="text-align:right">Marjă</th>
+          <th style="text-align:right">Profit</th>
           <th style="text-align:right">Abatere buget</th>
         </tr></thead>
         <tbody id="dash-tbody"></tbody>
@@ -466,20 +466,20 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 <div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;align-items:center;justify-content:center" onmousedown="closeSettingsOverlay(event)">
   <div id="settings-modal" style="background:var(--bg1);border:1px solid var(--bd);border-radius:var(--rlg);width:440px;max-width:95vw;box-shadow:0 10px 40px rgba(0,0,0,.2)">
     <div style="display:flex;align-items:center;padding:18px 24px 14px;border-bottom:1px solid var(--bd);gap:10px;flex-shrink:0">
-      <span style="font-size:15px;font-weight:700;flex:1">⚙ Setări costuri</span>
+      <span style="font-size:15px;font-weight:700;flex:1">€ Costuri interne</span>
       <button onclick="hideSettings()" style="background:none;border:none;font-size:18px;color:var(--t3);cursor:pointer">×</button>
     </div>
     <div style="padding:18px 24px 22px">
       <div class="field-group">
-        <label class="field-label">Cost lunar fix (overhead) €</label>
-        <input type="number" class="field-input" id="set-overhead" min="0" step="100" oninput="syncSettings()">
-      </div>
-      <div class="field-group">
-        <label class="field-label">Ore facturabile / lună</label>
-        <input type="number" class="field-input" id="set-billable" min="1" step="1" oninput="syncSettings()">
-      </div>
-      <div style="font-size:12px;color:var(--t2);background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;margin-top:4px">
-        Cost intern / oră: <span id="set-rate" style="font-weight:700;color:var(--t1)"></span>
+        <label class="field-label">Cost intern / oră</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" class="field-input" id="set-cost-rate" min="0" step="0.5" placeholder="ex: 26" style="width:160px;flex-shrink:0">
+          <span style="font-size:12px;color:var(--t2)">€/h</span>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5">
+          Calculat ca: overhead lunar ÷ ore trackuite/lună<br>
+          Ex: 14.000 ÷ 530h = 26,4 €/h
+        </div>
       </div>
       <div class="modal-actions">
         <span></span>
@@ -903,8 +903,12 @@ async function loadFinancials() {
       try {
         const parsed = JSON.parse(item.fields.JsonData || '{}');
         if (parsed.settings && typeof parsed.settings === 'object') {
-          if (typeof parsed.settings.monthlyOverhead === 'number')       costSettings.monthlyOverhead = parsed.settings.monthlyOverhead;
-          if (typeof parsed.settings.billableHoursPerMonth === 'number') costSettings.billableHoursPerMonth = parsed.settings.billableHoursPerMonth;
+          const s = parsed.settings;
+          if (typeof s.costPerHour === 'number' && s.costPerHour > 0) {
+            costSettings.costPerHour = s.costPerHour;
+          } else if (typeof s.monthlyOverhead === 'number' && typeof s.billableHoursPerMonth === 'number' && s.billableHoursPerMonth > 0) {
+            costSettings.costPerHour = Math.round(s.monthlyOverhead / s.billableHoursPerMonth * 10) / 10;
+          }
         }
         if (parsed.projects && typeof parsed.projects === 'object') projectFin = parsed.projects;
       } catch { /* keep defaults */ }
@@ -925,7 +929,7 @@ async function saveFinancials() {
     const siteId = await getSiteId();
     const listId = await getFinList(siteId);
     if (!siteId || !listId) { setStatus('error', 'Lista financiară lipsă'); return; }
-    const json = JSON.stringify({ settings: costSettings, projects: projectFin });
+    const json = JSON.stringify({ settings: { costPerHour: costSettings.costPerHour }, projects: projectFin });
     if (finItemId) {
       await graph('PATCH', `/sites/${siteId}/lists/${listId}/items/${finItemId}/fields`, { JsonData: json });
     } else {
@@ -1184,16 +1188,14 @@ let projects = [
 ];
 
 /* ── Financiare (listă SharePoint separată, restricționată la Marius+Martin) ── */
-let costSettings = { monthlyOverhead: 0, billableHoursPerMonth: 430 }; // overhead real se setează din ⚙ (stocat în lista restricționată, NU în codul public)
+let costSettings = { costPerHour: 0 }; // setat din € Costuri (stocat în lista restricționată, NU în codul public)
 let projectFin = {};            // { [projectId]: { billingType, fee, hourlyRate, costRate } }
 let cachedFinListId = null;
 let finItemId = null;
 
 /* ── Profitability formulas — citesc financiarele din projectFin (nu din proiect) ── */
 function internalRate() {
-  const bh = costSettings.billableHoursPerMonth;
-  if (!bh || bh <= 0) return 0;
-  return costSettings.monthlyOverhead / bh;
+  return costSettings.costPerHour > 0 ? costSettings.costPerHour : 0;
 }
 // Cost/oră efectiv: override per proiect dacă e setat, altfel rata firmei (din 14k)
 function effCostRate(p) {
@@ -1405,7 +1407,7 @@ function renderProfitSummary() {
   const lossPart = lossCount > 0
     ? ` · <span style="color:var(--red)">${lossCount} în pierdere</span>`
     : '';
-  el.innerHTML = `<span class="sep" style="margin:0 2px"></span>Marjă: <b style="color:${col}">${fmtMoney(total)}</b>${lossPart}`;
+  el.innerHTML = `<span class="sep" style="margin:0 2px"></span>Profit: <b style="color:${col}">${fmtMoney(total)}</b>${lossPart}`;
 }
 
 /* ── Actions ── */
@@ -1566,13 +1568,13 @@ function syncModal() {
         const cost   = ttH * costR;
         const margin = rev - cost;
         const eRate  = rev / ttH;
-        marginInfo.innerHTML = `Venit ${fmtMoney(rev)} − cost ${fmtMoney(cost)} (${costR.toLocaleString('ro-RO',{maximumFractionDigits:1})} €/h) = <b>Marjă ${fmtMoney(margin)}</b> · ${eRate.toLocaleString('ro-RO',{maximumFractionDigits:0})} €/h efectiv`;
+        marginInfo.innerHTML = `Venit ${fmtMoney(rev)} − cost ${fmtMoney(cost)} (${costR.toLocaleString('ro-RO',{maximumFractionDigits:1})} €/h) = <b>Profit ${fmtMoney(margin)}</b> · ${eRate.toLocaleString('ro-RO',{maximumFractionDigits:0})} €/h efectiv`;
         marginInfo.style.color = margin < 0 ? 'var(--red)' : 'var(--green)';
       } else if (hasValue && ttH <= 0) {
-        marginInfo.textContent = 'Sincronizează TT pentru a calcula marja.';
+        marginInfo.textContent = 'Sincronizează TT pentru a calcula profitul.';
         marginInfo.style.color = 'var(--t3)';
       } else {
-        marginInfo.textContent = isHourly ? 'Introdu tariful pentru calcul marjă.' : 'Introdu valoarea contractului pentru calcul marjă.';
+        marginInfo.textContent = isHourly ? 'Introdu tariful pentru calcul profit.' : 'Introdu valoarea contractului pentru calcul profit.';
         marginInfo.style.color = 'var(--t3)';
       }
     }
@@ -1730,29 +1732,17 @@ function closeModal(e) { if (e.target === document.getElementById('modal-overlay
 /* ── Settings modal (costuri) ── */
 function showSettings() {
   if (!isCostAdmin()) return;
-  document.getElementById('set-overhead').value = costSettings.monthlyOverhead;
-  document.getElementById('set-billable').value = costSettings.billableHoursPerMonth;
-  syncSettings();
+  document.getElementById('set-cost-rate').value = costSettings.costPerHour || '';
   document.getElementById('settings-overlay').style.display = 'flex';
 }
 function hideSettings() { document.getElementById('settings-overlay').style.display = 'none'; }
 function closeSettingsOverlay(e) { if (e.target === document.getElementById('settings-overlay')) hideSettings(); }
-function syncSettings() {
-  const oh = parseFloat(document.getElementById('set-overhead').value) || 0;
-  const bh = parseFloat(document.getElementById('set-billable').value) || 0;
-  const rate = bh > 0 ? oh / bh : 0;
-  document.getElementById('set-rate').textContent = bh > 0
-    ? rate.toLocaleString('ro-RO', {maximumFractionDigits:1}) + ' €/h'
-    : '—';
-}
 function saveSettingsFromModal() {
-  const oh = parseFloat(document.getElementById('set-overhead').value);
-  const bh = parseFloat(document.getElementById('set-billable').value);
-  costSettings.monthlyOverhead      = (oh >= 0 && !isNaN(oh)) ? oh : costSettings.monthlyOverhead;
-  costSettings.billableHoursPerMonth = (bh > 0  && !isNaN(bh)) ? bh : costSettings.billableHoursPerMonth;
+  const cph = parseFloat(document.getElementById('set-cost-rate').value);
+  if (cph > 0 && !isNaN(cph)) costSettings.costPerHour = cph;
   saveFinancials();
   hideSettings();
-  render(); // refresh dots/summary with new internal rate
+  render();
 }
 
 /* ── Dashboard (Analiză profitabilitate) ── */
@@ -1801,7 +1791,7 @@ function renderDashboard() {
   document.getElementById('dash-cards').innerHTML =
     card('Venit total', fmtMoney(totRev)) +
     card('Cost intern', fmtMoney(totCost)) +
-    card('Marjă totală', fmtMoney(totMargin), totMargin < 0 ? 'var(--red)' : 'var(--green)') +
+    card('Profit total', fmtMoney(totMargin), totMargin < 0 ? 'var(--red)' : 'var(--green)') +
     card('Proiecte în pierdere', String(lossCount), lossCount > 0 ? 'var(--red)' : 'var(--t1)');
 
   const tbody = document.getElementById('dash-tbody');
@@ -1830,7 +1820,7 @@ function renderDashboard() {
 }
 
 function exportDashboard() {
-  const rows = [['Nume','Venit (EUR)','Ore','Tarif efectiv (EUR/h)','Marja (EUR)','Abatere buget (%)']];
+  const rows = [['Nume','Venit (EUR)','Ore','Tarif efectiv (EUR/h)','Profit (EUR)','Abatere buget (%)']];
   dashRows().forEach(r => {
     rows.push([
       r.name,
@@ -2161,7 +2151,7 @@ document.getElementById('gantt').addEventListener('scroll', updateBarLabels, { p
     if (htMarginRow && htMargin) {
       const m = (isProject && isCostAdmin()) ? projectMargin(row) : null;
       if (m != null) {
-        htMargin.textContent      = 'Marjă: ' + fmtMoney(m);
+        htMargin.textContent      = 'Profit: ' + fmtMoney(m);
         htMargin.style.color      = m < 0 ? 'var(--red)' : 'var(--green)';
         htMarginRow.style.display = 'flex';
       } else {
