@@ -271,7 +271,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 </div>
 
 <!-- ── Modal ── -->
-<div id="modal-overlay" onclick="closeModal(event)">
+<div id="modal-overlay" onmousedown="closeModal(event)">
   <div id="modal">
     <div class="modal-header">
       <div class="modal-color-dot" id="m-color-dot"></div>
@@ -438,7 +438,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 </div>
 
 <!-- ── Dashboard (Analiză profitabilitate) overlay ── -->
-<div id="dash-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center" onclick="closeDashOverlay(event)">
+<div id="dash-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;align-items:center;justify-content:center" onmousedown="closeDashOverlay(event)">
   <div id="dash-modal" style="background:var(--bg1);border:1px solid var(--bd);border-radius:var(--rlg);width:1000px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.22)">
     <div style="display:flex;align-items:center;padding:18px 24px 14px;border-bottom:1px solid var(--bd);gap:12px;flex-shrink:0">
       <span style="font-size:15px;font-weight:700;flex:1">📊 Analiză profitabilitate</span>
@@ -463,7 +463,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 </div>
 
 <!-- ── Settings modal (costuri) ── -->
-<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;align-items:center;justify-content:center" onclick="closeSettingsOverlay(event)">
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1200;align-items:center;justify-content:center" onmousedown="closeSettingsOverlay(event)">
   <div id="settings-modal" style="background:var(--bg1);border:1px solid var(--bd);border-radius:var(--rlg);width:440px;max-width:95vw;box-shadow:0 10px 40px rgba(0,0,0,.2)">
     <div style="display:flex;align-items:center;padding:18px 24px 14px;border-bottom:1px solid var(--bd);gap:10px;flex-shrink:0">
       <span style="font-size:15px;font-weight:700;flex:1">⚙ Setări costuri</span>
