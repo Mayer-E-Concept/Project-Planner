@@ -1820,7 +1820,7 @@ function renderDashboard() {
     const marginTxt = r.margin == null ? '—' : fmtMoney(r.margin);
     const revTxt    = r.revenue > 0 ? fmtMoney(r.revenue) : '—';
     const hoursTxt  = r.hours > 0 ? fmtHours(r.hours) : '—';
-    const costVal   = r.hours > 0 && internalRate() > 0 ? r.hours * effCostRate(r.p) : null;
+    const costVal   = r.hours > 0 && effCostRate(r.p) > 0 ? r.hours * effCostRate(r.p) : null;
     const costTxt   = costVal != null ? fmtMoney(costVal) : '—';
     const eRateTxt  = r.eRate == null ? '—' : (r.eRate.toLocaleString('ro-RO',{maximumFractionDigits:0}) + ' €/h');
     let varTxt = '—', varCol = 'var(--t2)';
@@ -1845,7 +1845,7 @@ function renderDashboard() {
 function exportDashboard() {
   const rows = [['Nume','Venit (EUR)','Ore','Cost (EUR)','Tarif efectiv (EUR/h)','Profit (EUR)','Abatere buget (%)']];
   dashRows().forEach(r => {
-    const costVal = r.hours > 0 && internalRate() > 0 ? Math.round(r.hours * effCostRate(r.p)) : '';
+    const costVal = r.hours > 0 && effCostRate(r.p) > 0 ? Math.round(r.hours * effCostRate(r.p)) : '';
     rows.push([
       r.name,
       r.revenue > 0 ? Math.round(r.revenue) : '',
