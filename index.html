@@ -133,6 +133,10 @@ body.is-resizing,body.is-resizing *{cursor:ew-resize!important;user-select:none!
 .btn-delete{padding:8px 16px;border-radius:var(--r);border:1px solid #f5c6cb;background:#fde8ec;color:var(--red);font-size:12px;font-weight:700}
 .btn-cancel{padding:8px 16px;border-radius:var(--r);border:1px solid var(--bd);background:transparent;color:var(--t2);font-size:12px}
 .btn-save{padding:8px 18px;border-radius:var(--r);border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:700}
+/* Modal read-only pentru non-editori: campurile devin needitabile, actiunile dispar */
+#modal-overlay.readonly input,#modal-overlay.readonly select,#modal-overlay.readonly textarea{pointer-events:none;background:var(--bg2);opacity:.8}
+#modal-overlay.readonly .swatch,#modal-overlay.readonly .status-btn{pointer-events:none;opacity:.5}
+#modal-overlay.readonly .btn-save,#modal-overlay.readonly .btn-delete{display:none}
 input[type=range]{width:100%;accent-color:var(--blue)}
 /* TT link row */
 .tt-link-row{display:flex;gap:8px;align-items:center}
@@ -566,6 +570,14 @@ async function initMsal() {
       document.getElementById('btn-dashboard').style.display = '';
       document.getElementById('btn-settings').style.display = '';
     }
+    if (!isEditor()) {
+      // Non-editor: planner read-only (bariera reala = permisiunea SharePoint).
+      // Ascunde actiunile de editare si arata clar starea.
+      document.getElementById('btn-add-project').style.display = 'none';
+      const ss = document.getElementById('save-status');
+      ss.innerHTML = '👁<span style="margin-left:5px">Doar vizualizare</span>';
+      ss.style.color = 'var(--t2)';
+    }
     showLoading(false);
   }
 }
@@ -654,12 +666,14 @@ async function loadData() {
 
 let saveTimer = null;
 function queueSave() {
+  if (!isEditor()) return;   // non-editori: read-only, nicio scriere pe SharePoint
   setStatus('pending', 'Se salvează...');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(doSave, 1200);
 }
 
 async function doSave() {
+  if (!isEditor()) return;   // plasa de siguranta: non-editorii nu scriu niciodata
   try {
     const siteId = await getSiteId();
     const listId = await getOrCreateList(siteId);
@@ -680,6 +694,7 @@ async function doSave() {
 }
 
 function setStatus(type, text) {
+  if (!isEditor()) return;   // non-editori: badge fix "Doar vizualizare", nu suprascrie
   const icon = document.getElementById('save-icon');
   const lbl = document.getElementById('save-text');
   const colors = { ok: 'var(--green)', pending: 'var(--t3)', error: 'var(--red)' };
@@ -838,6 +853,15 @@ function isCostAdmin() {
   const email = (currentAccount?.username || '').toLowerCase();
   return COST_ADMINS.includes(email);
 }
+// Acces la EDITARE planner — strict pe email exact (doar Marius + Martin).
+// Ceilalti vad planner-ul read-only. Bariera REALA e permisiunea SharePoint pe lista
+// ProjectPlannerData (Members=Read, Marius+Martin=Edit); gate-ul asta e doar pt. UX curat
+// (fara erori 403 de salvare si fara butoane de editare moarte pentru non-editori).
+const EDITORS = ['m.poenar@me-concept.de', 'm.mayer@me-concept.de'];
+function isEditor() {
+  const email = (currentAccount?.username || '').toLowerCase();
+  return EDITORS.includes(email);
+}
 
 /* ── Whitelist (access control) ── */
 // Fallback la prima utilizare — echipa curenta
@@ -872,6 +896,7 @@ async function loadWhitelist() {
 }
 
 async function saveWhitelist() {
+  if (!isEditor()) return;
   try {
     const siteId = await getSiteId();
     const listId = await getOrCreateList(siteId);
@@ -1041,12 +1066,14 @@ async function loadLogs() {
 }
 
 function queueSaveLogs() {
+  if (!isEditor()) return;   // non-editori nu genereaza/salveaza loguri
   // Salvam imediat — logurile sunt rare si trebuie sa persiste
   clearTimeout(logSaveTimer);
   logSaveTimer = setTimeout(saveLogsToSP, 300);
 }
 
 async function saveLogsToSP() {
+  if (!isEditor()) return;
   try {
     const siteId = await getSiteId();
     const listId = await getOrCreateList(siteId);
@@ -1124,6 +1151,7 @@ function renderLogs() {
 }
 
 function clearLogs() {
+  if (!isEditor()) return;
   if (!confirm('Ștergi tot jurnalul? Acțiunea este ireversibilă.')) return;
   logs = [];
   saveLogsToSP();
@@ -1376,7 +1404,7 @@ function render() {
           ? `<button class="toggle-btn" onclick="toggleCollapse('${row.id}')">${row.collapsed?'▶':'▼'}</button>`
           : `<span style="width:14px;flex-shrink:0"></span>`)
       : `<span style="width:14px;flex-shrink:0"></span>`;
-    const addBtn = row.isProject
+    const addBtn = (row.isProject && isEditor())
       ? `<button class="add-task-btn" onclick="addTask('${row.id}')" title="Adaugă task">+</button>` : '';
 
     return `<div class="gantt-row ${bg}">
@@ -1439,6 +1467,7 @@ function uniqueName(name, excludeId) {
 }
 
 function addProject() {
+  if (!isEditor()) return;
   const t = todayStr();
   const name = uniqueName('Proiect nou', null);
   projects.push({id:uid(),name,color:nextProjectColor(),
@@ -1447,6 +1476,7 @@ function addProject() {
   render(); queueSave();
 }
 function addTask(projId) {
+  if (!isEditor()) return;
   const p = projects.find(x => x.id === projId);
   if (!p) return;
   p.collapsed = false;
@@ -1469,7 +1499,8 @@ function openModal(itemId, projectId) {
   }
   if (!row) return;
   modalRow = row;
-  document.getElementById('m-title-lbl').textContent = row.isProject ? 'Editare proiect' : 'Editare task';
+  const _canEdit = isEditor();
+  document.getElementById('m-title-lbl').textContent = (_canEdit ? 'Editare ' : 'Vizualizare ') + (row.isProject ? 'proiect' : 'task');
   document.getElementById('m-name').value = row.name;
   document.getElementById('m-start').value = row.start;
   document.getElementById('m-end').value = row.end;
@@ -1527,6 +1558,9 @@ function openModal(itemId, projectId) {
     document.getElementById('m-assignee-group').style.display = 'none';
   }
   syncModal();
+  document.getElementById('modal-overlay').classList.toggle('readonly', !_canEdit);
+  const _cancelBtn = document.querySelector('#modal-overlay .btn-cancel');
+  if (_cancelBtn) _cancelBtn.textContent = _canEdit ? 'Anulează' : 'Închide';
   document.getElementById('modal-overlay').classList.add('open');
 }
 function syncModal() {
@@ -1647,6 +1681,7 @@ function pickStatus(key) {
   ).join('');
 }
 function saveItem() {
+  if (!isEditor()) return;
   if (!modalRow) return;
   let name = document.getElementById('m-name').value.trim() || 'Fără nume';
   const start = document.getElementById('m-start').value;
@@ -1721,6 +1756,7 @@ function saveItem() {
   hideModal(); render(); queueSave();
 }
 function deleteItem() {
+  if (!isEditor()) return;
   if (!modalRow) return;
   if (modalRow.isProject) {
     addLog('delete_project', modalRow.name, `Proiect cu ${modalRow.tasks?.length||0} task-uri șters`);
@@ -1989,6 +2025,7 @@ function _findRow(id, pid) {
 }
 
 document.addEventListener('mousedown', e => {
+  if (!isEditor()) return;   // non-editori: fara drag/resize pe bare
   // ── resize handle ──
   const rh = e.target.closest('[data-rh]');
   if (rh) {
